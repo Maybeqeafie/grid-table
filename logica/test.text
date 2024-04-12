@@ -1,0 +1,142 @@
+import {Logger} from '../common/logger/logger';
+import {generateShortId} from '../utils/generate-short-id';
+import {HttpService} from '../common/http/http.service';
+
+export class Distributor {
+    private readonly logger;
+    private readonly httpService: HttpService;
+
+    private readonly id: string;
+
+    private dictionary: ["авансом", "антидот", "багор", "барыня", "бедро", "бюргер", "вкось", "всхрап", "вуаль", "девятая", "джинсы",
+        "добром", "дубликат", "ежевика", "замах", "заново", "класс", "медперсонал", "морда", "озеро", "отряд", "пороша", "райком", "распад", "родные", "словосочетание",
+        "солнцестояние", "сомнамбула", "такси", "тренировка", "цитата", "челнок", "чужое"];
+    private table: [
+        ["м", "о", "к", "й", "а", "р", "т", "и", "о", "к", "ь", "ы", "с", "л"],
+        ["о", "р", "е", "з", "о", "о", "с", "в", "о", "с", "л", "с", "т", "а"],
+        ["с", "д", "е", "г", "д", "к", "о", "н", "о", "ч", "а", "н", "п", "н"],
+        ["н", "е", "а", "и", "а", "н", "л", "м", "р", "л", "у", "и", "о", "о"],
+        ["а", "б", "т", "т", "а", "е", "н", "р", "к", "а", "в", "ж", "р", "с"],
+        ["в", "н", "м", "з", "ч", "а", "ц", "щ", "я", "ц", "с", "д", "о", "р"],
+        ["а", "д", "р", "о", "м", "р", "е", "г", "р", "ю", "б", "п", "ш", "е"],
+        ["ц", "у", "г", "б", "р", "ж", "с", "ч", "в", "с", "х", "р", "а", "п"],
+        ["щ", "б", "у", "р", "е", "б", "т", "э", "ж", "з", "б", "ф", "ц", "д"],
+        ["с", "л", "о", "в", "о", "с", "о", "ч", "е", "т", "а", "н", "и", "е"],
+        ["а", "и", "и", "к", "т", "д", "я", "д", "а", "э", "р", "м", "т", "м"],
+        ["а", "к", "в", "о", "р", "и", "н", "е", "р", "т", "ы", "л", "а", "я"],
+        ["а", "а", "д", "с", "я", "ю", "и", "ы", "р", "ь", "н", "ь", "т", "х"],
+        ["ж", "т", "ц", "ь", "д", "ш", "е", "д", "е", "в", "а", "т", "а", "я"]
+    ];
+    private lengthRows = this.table.length;
+    private lengthCols = this.table[0].length;
+
+    constructor() {
+        this.id = generateShortId();
+
+        this.logger = new Logger(`${Distributor.name}_${this.id}`);
+        this.httpService = new HttpService();
+
+        this.logger.log('Initialized');
+    }
+
+    run() {
+        this.produceTasks();
+        this.findResult();
+    }
+
+    async produceTasks() {
+        for (let i = 0; i <= this.dictionary.length; i++) {
+            await this.produce(`
+const table = [
+    ["м", "о", "к", "й", "а", "р", "т", "и", "о", "к", "ь", "ы", "с", "л"],
+    ["о", "р", "е", "з", "о", "о", "с", "в", "о", "с", "л", "с", "т", "а"],
+    ["с", "д", "е", "г", "д", "к", "о", "н", "о", "ч", "а", "н", "п", "н"],
+    ["н", "е", "а", "и", "а", "н", "л", "м", "р", "л", "у", "и", "о", "о"],
+    ["а", "б", "т", "т", "а", "е", "н", "р", "к", "а", "в", "ж", "р", "с"],
+    ["в", "н", "м", "з", "ч", "а", "ц", "щ", "я", "ц", "с", "д", "о", "р"],
+    ["а", "д", "р", "о", "м", "р", "е", "г", "р", "ю", "б", "п", "ш", "е"],
+    ["ц", "у", "г", "б", "р", "ж", "с", "ч", "в", "с", "х", "р", "а", "п"],
+    ["щ", "б", "у", "р", "е", "б", "т", "э", "ж", "з", "б", "ф", "ц", "д"],
+    ["с", "л", "о", "в", "о", "с", "о", "ч", "е", "т", "а", "н", "и", "е"],
+    ["а", "и", "и", "к", "т", "д", "я", "д", "а", "э", "р", "м", "т", "м"],
+    ["а", "к", "в", "о", "р", "и", "н", "е", "р", "т", "ы", "л", "а", "я"],
+    ["а", "а", "д", "с", "я", "ю", "и", "ы", "р", "ь", "н", "ь", "т", "х"],
+    ["ж", "т", "ц", "ь", "д", "ш", "е", "д", "е", "в", "а", "т", "а", "я"]
+]
+const dictionary = ["авансом","антидот","багор","барыня","бедро","бюргер","вкось","всхрап","вуаль","девятая","джинсы",
+    "добром","дубликат","ежевика","замах","заново","класс","медперсонал","морда","озеро","отряд","пороша","райком","распад","родные","словосочетание",
+    "солнцестояние","сомнамбула","такси","тренировка","цитата","челнок","чужое"];
+
+const valueToMove = dictionary.splice(${i}, 1)[0];
+dictionary.splice(0, 0, valueToMove);
+
+let resCounter = 0;
+function findWordsInDictionary(table, dictionary) {
+    const lengthRows = table.length;
+    const lengthCols = table[0].length;
+    const foundWords = [];
+
+
+    for (let p = 0; p < lengthRows; p++) {
+        let counter = 0;
+        for (let i = 0; i < lengthCols; i++) {
+            for (let j = i + 1; j <= lengthCols; j++) {
+                counter += j;
+                const substring = table[p].slice(i, j).join('');
+                if (dictionary.includes(substring)) {
+                    foundWords.push(substring);
+                    for(let k = i; k < j; k++){
+                        table[p][k] = 1;
+                        resCounter += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    for (let j = 0; j < lengthCols; j++) {
+        for (let i = 0; i < lengthRows; i++) {
+            let colWord = '';
+            for (let k = i; k < lengthRows; k++) {
+                colWord += table[k][j];
+                if (dictionary.includes(colWord)) {
+                    foundWords.push(colWord);
+                    for(let p = i; p <= k; p++){
+                        table[p][j] = 1;
+                        resCounter += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    return foundWords;
+}
+
+const wordsFound = findWordsInDictionary(table, dictionary);
+console.log(wordsFound);
+console.log(resCounter);
+console.log(table);
+`);
+        }
+    }
+
+    async produce(code: string) {
+        await this.httpService.produce({
+            distributorId: this.id,
+            code: code
+        });
+    }
+
+    async findResult() {
+        const tasks = await this.httpService.findResult({distributorId: this.id});
+        if (tasks && tasks.length <= this.dictionary.length) {
+            for (const task of tasks) {
+                this.logger.log('Find correct answer, task id =', task.id, 'task result =', task.result);
+            }
+            process.exit(0);
+        }
+
+        setTimeout(this.findResult.bind(this), 5 * 1000);
+    }
+}
